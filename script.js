@@ -5,13 +5,25 @@
   var body = document.body;
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* ---------- Header pri skrolovanju ---------- */
+  var hasIO = 'IntersectionObserver' in window;
+
+  /* ---------- Header: linija ispod kad se krene sa vrha ---------- */
   var header = document.getElementById('header');
-  function onScroll() {
-    header.classList.toggle('is-scrolled', window.scrollY > 40);
+  if (hasIO) {
+    new IntersectionObserver(function (e) {
+      header.classList.toggle('is-scrolled', !e[0].isIntersecting);
+    }).observe(document.getElementById('topSentinel'));
   }
-  onScroll();
-  window.addEventListener('scroll', onScroll, { passive: true });
+
+  /* ---------- Donja traka na telefonu: pojavi se kad dugmad iz hero dela odu sa ekrana ---------- */
+  var dock = document.getElementById('dock');
+  if (hasIO) {
+    new IntersectionObserver(function (e) {
+      dock.classList.toggle('is-visible', !e[0].isIntersecting);
+    }).observe(document.getElementById('heroActions'));
+  } else {
+    dock.classList.add('is-visible');
+  }
 
   /* ---------- Meni na telefonu ---------- */
   var burger = document.getElementById('burger');
@@ -38,17 +50,17 @@
     if (e.target.closest('a')) closeMenu();
   });
   window.addEventListener('resize', function () {
-    if (window.innerWidth >= 960 && body.classList.contains('menu-open')) closeMenu();
+    if (window.innerWidth >= 1024 && body.classList.contains('menu-open')) closeMenu();
   });
 
   /* ---------- Animacije pri skrolovanju ---------- */
-  var reveals = document.querySelectorAll('.reveal');
-  if ('IntersectionObserver' in window && !reduceMotion) {
+  var reveals = document.querySelectorAll('.reveal, .reveal-img');
+  if (hasIO && !reduceMotion) {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (!entry.isIntersecting) return;
         var el = entry.target;
-        var siblings = el.parentElement ? el.parentElement.querySelectorAll(':scope > .reveal') : [];
+        var siblings = el.parentElement ? el.parentElement.querySelectorAll(':scope > .reveal, :scope > .reveal-img') : [];
         var idx = Array.prototype.indexOf.call(siblings, el);
         el.style.transitionDelay = Math.min(Math.max(idx, 0), 5) * 70 + 'ms';
         el.classList.add('is-in');
@@ -62,7 +74,7 @@
 
   /* ---------- Aktivan link u navigaciji ---------- */
   var navLinks = document.querySelectorAll('.nav a');
-  if ('IntersectionObserver' in window) {
+  if (hasIO) {
     var navIo = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (!entry.isIntersecting) return;
@@ -76,7 +88,7 @@
 
   /* ---------- Galerija: filter ---------- */
   var items = Array.prototype.slice.call(document.querySelectorAll('.g-item'));
-  var chips = document.querySelectorAll('.chip');
+  var chips = document.querySelectorAll('.tab');
 
   chips.forEach(function (chip) {
     chip.addEventListener('click', function () {
